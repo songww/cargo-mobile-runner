@@ -2,33 +2,51 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "ios-deployer", about = "An example of StructOpt usage.")]
+#[structopt(name = "ios-deployer", about = "Helpers for ios app development.")]
 struct Opt {
     /// Activate debug mode
     // short and long flags (-d, --debug) will be deduced from the field's name
     #[structopt(short, long)]
-    debug: bool,
+    verbose: bool,
 
-    /// Set speed
-    // we don't want to name it "speed", need to look smart
-    #[structopt(short = "v", long = "velocity", default_value = "42")]
-    speed: f64,
+    #[structopt(subcommand)]
+    command: Command,
+}
 
-    /// Input file
-    #[structopt(parse(from_os_str))]
-    input: PathBuf,
+#[derive(Debug, StructOpt)]
+enum Command {
+    Device {
+        #[structopt(short, long)]
+        list: bool,
+    },
 
-    /// Output file, stdout if not present
-    #[structopt(parse(from_os_str))]
-    output: Option<PathBuf>,
+    Test {
+        #[structopt(short, long)]
+        device: Option<String>,
+        // #[structopt(short, parse(from_occurrences))]
+        // args: Option<String>,
+    },
 
-    /// Where to write the output: to `stdout` or `file`
-    #[structopt(short)]
-    out_type: String,
+    Bench {
+        #[structopt(short, long)]
+        device: Option<String>,
+    },
 
-    /// File name: only required when `out-type` is set to `file`
-    #[structopt(name = "FILE", required_if("out-type", "file"))]
-    file_name: Option<String>,
+    /// run binary on ios device.
+    Run {
+        /// device udid which to run on.
+        #[structopt(short, long)]
+        device: Option<String>,
+        /// Path of binary which to run.
+        /// Output of cargo build will be used, if not given.
+        #[structopt(parse(from_os_str))]
+        bin: Option<PathBuf>,
+    },
+
+    Criterion {
+        #[structopt(short, long)]
+        device: Option<String>,
+    },
 }
 
 fn main() {
