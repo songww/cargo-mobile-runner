@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+// Lisence see: https://github.com/songww/cargo-mobile-runner/blob/main/ios-deployer/LICENSE-exception
+
 #[derive(Error, Debug, Clone, Copy)]
 #[repr(u32)]
 pub enum AMDeviceError {

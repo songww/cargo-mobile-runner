@@ -3,8 +3,18 @@ name = "cargo-mobile-runner"
 version = "0.1.0"
 authors = ["Wanway Song <sww4718168@163.com>"]
 edition = "2018"
+license = "Apache-2.0 OR MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 structopt = "0.3"
+ios-deployer = { version = "0.1", path = "./ios-deployer", optional = true }
+#ndk = { version = "0.3", optional = true }
+#ndk-glue = { version = "0.3", optional = true }
+ndk-build = { version = "0.1", optional = true, features = [ "logger" ] }
+
+[features]
+default = [ "ios", "android" ]
+ios = [ "ios-deployer" ]
+android = [ "ndk-build" ]
