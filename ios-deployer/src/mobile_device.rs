@@ -257,7 +257,11 @@ impl AMDevice {
             .and_then(|ns| Some(ns.as_mut_ptr()))
             .or_else(|| Some(ptr::null_mut()))
             .unwrap();
-        let v = unsafe { ffi::AMDeviceCopyValue(self.0, ns as *mut c_void, key) };
+        let v = unsafe { ffi::AMDeviceCopyValue(self.0, ptr::null_mut(), key) };
+        if v.is_null() {
+            return "".to_string();
+        }
+
         unsafe { CFString::from_void(v as *const c_void) }.to_string()
     }
 

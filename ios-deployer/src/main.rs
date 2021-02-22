@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+use ios_deployer::mobile_device::AMDevice;
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "ios-deployer", about = "Helpers for ios app development.")]
 struct Opt {
@@ -16,11 +18,13 @@ struct Opt {
 #[derive(Debug, StructOpt)]
 enum Command {
     Device {
+        /// Lists all connected devices.
         #[structopt(short, long)]
         list: bool,
     },
 
     Test {
+        /// udid of device which to run on.
         #[structopt(short, long)]
         device: Option<String>,
         // #[structopt(short, parse(from_occurrences))]
@@ -28,13 +32,14 @@ enum Command {
     },
 
     Bench {
+        /// udid of device which to run on.
         #[structopt(short, long)]
         device: Option<String>,
     },
 
     /// run binary on ios device.
     Run {
-        /// device udid which to run on.
+        /// udid of device which to run on.
         #[structopt(short, long)]
         device: Option<String>,
         /// Path of binary which to run.
@@ -44,6 +49,13 @@ enum Command {
     },
 
     Criterion {
+        /// udid of device which to run on.
+        #[structopt(short, long)]
+        device: Option<String>,
+    },
+
+    Miri {
+        /// udid of device which to run on.
         #[structopt(short, long)]
         device: Option<String>,
     },
@@ -51,5 +63,22 @@ enum Command {
 
 fn main() {
     let opt = Opt::from_args();
+    match opt.command {
+        Command::Device { list } => {
+            if list {
+                for mut dev in AMDevice::devices() {
+                    println!(
+                        "model: {}, udid: ({}), class: {}, build version: {}, product version: {}",
+                        dev.get_value("HardwareModel", None),
+                        dev.device_identifier(),
+                        dev.get_value("DeviceClass", None),
+                        dev.get_value("BuildVersion", None),
+                        dev.get_value("ProductVersion", None)
+                    );
+                }
+            }
+        }
+        _ => {}
+    }
     println!("{:?}", opt);
 }
