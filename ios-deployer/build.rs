@@ -3,6 +3,10 @@ use std::fs;
 use std::path;
 
 fn main() {
+    if !cfg!(feature = "ios") && ! !cfg!(feature = "android") {
+        panic!("At least one of `ios` or `android` platform should be enabled by feature!")
+    }
+
     let md_framework_location =
         path::PathBuf::from("/System/Library/PrivateFrameworks/MobileDevice.framework");
     let new_md_framework_location = path::PathBuf::from(
