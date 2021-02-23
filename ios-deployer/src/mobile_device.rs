@@ -1,3 +1,4 @@
+use super::device_desc::DeviceDesc;
 use super::mobile_device_errors as errors;
 use super::mobile_device_sys as ffi;
 
@@ -9,6 +10,7 @@ use std::os::raw::c_char;
 use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 use std::ptr;
+use std::str::FromStr;
 
 use core_foundation::{
     array::CFArray, base::CFRelease, base::CFRetain, base::CFType, base::FromVoid, base::TCFType,
@@ -42,13 +44,15 @@ macro_rules! cfstr {
 
 macro_rules! cfstr1 {
     ($str:expr) => {
-        CFString::new($str).as_concrete_TypeRef()
+        CFString::from_str($str).unwrap().as_concrete_TypeRef()
     };
 }
 
 macro_rules! cfstr2 {
     ($path:expr) => {
-        CFString::new($path.to_str().unwrap()).as_concrete_TypeRef()
+        CFString::from_str($path.to_str().unwrap())
+            .unwrap()
+            .as_concrete_TypeRef()
     };
 }
 
@@ -236,7 +240,7 @@ impl AMDevice {
     }
 
     pub fn connect(&mut self) -> errors::AMDeviceResult<()> {
-        errors::to_result(unsafe { ffi::AMDeviceConnect(self.0) })
+        errors::to_result(unsafe { ffi::AMDeviceConnect(self.as_mut_ptr()) })
     }
 
     pub fn disconnect(&mut self) -> errors::AMDeviceResult<()> {
@@ -251,23 +255,33 @@ impl AMDevice {
         errors::to_result(unsafe { ffi::AMDeviceRelease(self.0) })
     }
 
-    pub fn get_value(&mut self, key: &str, arg1: Option<&mut str>) -> String {
-        let key = cfstr1!(key);
+    pub fn get_value<S: Into<CFString>>(
+        &mut self,
+        key: S,
+        arg1: Option<&mut str>,
+    ) -> Option<String> {
         let ns = arg1
-            .and_then(|ns| Some(ns.as_mut_ptr()))
+            .and_then(|ns| Some(ns.as_mut_ptr() as *mut _))
             .or_else(|| Some(ptr::null_mut()))
             .unwrap();
-        let v = unsafe { ffi::AMDeviceCopyValue(self.0, ptr::null_mut(), key) };
-        if v.is_null() {
-            return "".to_string();
-        }
+        let v = unsafe { ffi::AMDeviceCopyValue(self.0, ns, key.into().as_concrete_TypeRef()) };
 
-        unsafe { CFString::from_void(v as *const c_void) }.to_string()
+        if v.is_null() {
+            None
+        } else {
+            Some(unsafe { CFString::wrap_under_create_rule(v) }.to_string())
+        }
+    }
+
+    pub fn get_model(&mut self) -> &DeviceDesc {
+        self.get_value("HardwareModel", None)
+            .and_then(|model| Some(DeviceDesc::get(&model)))
+            .unwrap_or_else(|| &DeviceDesc::UNKNOWN)
     }
 
     pub fn device_identifier(&mut self) -> String {
         let v = unsafe { ffi::AMDeviceCopyDeviceIdentifier(self.0) };
-        unsafe { CFString::from_void(v as *const c_void) }.to_string()
+        unsafe { CFString::wrap_under_get_rule(v) }.to_string()
     }
 
     pub fn devices() -> Vec<AMDevice> {
@@ -278,7 +292,6 @@ impl AMDevice {
             .into_iter()
             .map(|ref_| AMDevice(unsafe { CFRetain(ref_) } as *mut c_void as *mut _))
             .collect();
-        // println!("{:?}", devs.len());
         devs
     }
 

@@ -2,7 +2,7 @@
 extern crate log;
 
 // mod deployer;
-mod devices;
+pub mod device_desc;
 pub mod mobile_device;
 pub mod mobile_device_errors;
 #[allow(non_snake_case)]

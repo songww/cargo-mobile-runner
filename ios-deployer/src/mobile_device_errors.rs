@@ -847,7 +847,7 @@ impl From<u32> for AMDeviceError {
             0xe8008026 => AMDeviceError::Code0xe8008026,
             0xe8008027 => AMDeviceError::Code0xe8008027,
             0xe8008028 => AMDeviceError::Code0xe8008028,
-            _ => panic!("Unknown error code."),
+            exc => panic!("Unknown error code (0x{:x}).", exc),
         }
     }
 }
