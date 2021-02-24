@@ -1,6 +1,7 @@
 use super::device_desc::DeviceDesc;
 use super::mobile_device_errors as errors;
 use super::mobile_device_sys as ffi;
+use super::Value;
 
 use std::collections::HashMap;
 use std::ffi::c_void;
@@ -401,8 +402,8 @@ impl AMDevice {
 
     pub fn mount_image(&mut self, image: &str, options: &HashMap<CFType, CFType>) {}
 
-    pub fn lookup_application(&mut self, options: &HashMap<CFType, CFType>) {
-        //
+    pub fn lookup_application<K: AsRef<[S]>, S: Into<CFString>>(&mut self, attributes: Option<K>) -> Value {
+        Value::Null
     }
 
     pub fn interface_type(&mut self) -> AMDeviceInterfaceType {
